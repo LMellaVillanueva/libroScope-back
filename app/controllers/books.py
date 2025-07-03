@@ -1,9 +1,47 @@
 from flask import Blueprint, request, jsonify
+from elasticsearch import Elasticsearch
 from app import app
 from app.models.Book import Book
+import requests
 import random
 
 book_bp = Blueprint('book_bp', __name__)
+
+#ElasticSearch config
+es = Elasticsearch('http://localhost:9200')
+client_info = es.info()
+print('CONNECTED TO ELASTICSEARCH')
+print(client_info.body)
+
+# Crear índice con una réplica, en caso que el primer index falle
+my_index = 'google_books'
+es.indices.delete(index=my_index, ignore_unavailable=True)
+es.indices.create(
+    index=my_index,
+    body={
+        'mappings':{
+            'properties':{
+                'volumeInfo':{
+                    'properties':{
+                        'title': {'type': 'text'},
+                        'authors': {'type': 'text'},
+                        'categories': {'type': 'text'},
+                    }
+                }
+            }
+        }
+    }
+)
+
+response = requests.get('https://www.googleapis.com/books/v1/volumes?q=fiction&maxResults=40&key=AIzaSyDNQ631Qv6pa6tyXCeU1xds2mnYL1KYNg8')
+if response.status_code == 200:
+    google_books = response.json()
+    for i, book in enumerate(google_books['items']):
+        es.index(index=my_index, id=i+1, body=book)
+else:
+    print(f'Error: {google_books.status_code}')
+
+
 
 @book_bp.route('/all_books/<user_id>', methods=['GET'])
 def all_books(user_id):
