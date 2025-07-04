@@ -41,7 +41,29 @@ if response.status_code == 200:
 else:
     print(f'Error: {google_books.status_code}')
 
-
+@book_bp.route('/search/<query>', methods=['POST'])
+def search_books(query):
+    if query:
+        res = es.search(
+            index=my_index,
+            body={
+                'size': 50,
+                'query':{
+                    'multi_match':{
+                        'query': query,
+                        'fields': [
+                            'volumeInfo.title^3',
+                            'volumeInfo.authors',
+                            'volumeInfo.categories'
+                        ],
+                        'fuzziness': 'AUTO'
+                    }
+                }
+            }
+        )
+        return jsonify({ "matching_books": [hit['_source'] for hit in res['hits']['hits']] }), 200
+    else:
+        return jsonify({ "errors":'La query no se obtuvo o no existe' }), 400
 
 @book_bp.route('/all_books/<user_id>', methods=['GET'])
 def all_books(user_id):
