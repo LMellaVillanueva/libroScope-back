@@ -33,16 +33,22 @@ es.indices.create(
     }
 )
 
-response = requests.get('https://www.googleapis.com/books/v1/volumes?q=fiction&maxResults=40&key=AIzaSyDNQ631Qv6pa6tyXCeU1xds2mnYL1KYNg8')
-if response.status_code == 200:
-    google_books = response.json()
-    for i, book in enumerate(google_books['items']):
-        es.index(index=my_index, id=i+1, body=book)
-else:
-    print(f'Error: {google_books.status_code}')
-
-@book_bp.route('/search/<query>', methods=['POST'])
-def search_books(query):
+@book_bp.route('/search/<query>/<categorie>', methods=['POST'])
+def search_books(query, categorie):
+    if categorie == 'none':
+        response = requests.get('https://www.googleapis.com/books/v1/volumes?q=fiction&maxResults=40&key=AIzaSyDNQ631Qv6pa6tyXCeU1xds2mnYL1KYNg8')
+        if response.status_code == 200:
+            google_books = response.json()
+            for i, book in enumerate(google_books['items']):
+                es.index(index=my_index, id=i+1, body=book)
+    elif len(categorie) and categorie != 'none':
+        response = requests.get(f'https://www.googleapis.com/books/v1/volumes?q=subject:{categorie}&maxResults=40&key=AIzaSyDNQ631Qv6pa6tyXCeU1xds2mnYL1KYNg8')
+        if response.status_code == 200:
+            google_books = response.json()
+            for i, book in enumerate(google_books['items']):
+                es.index(index=my_index, id=i+1, body=book)
+    else:
+        print(f'Error: {google_books.status_code}')
     if query:
         res = es.search(
             index=my_index,
