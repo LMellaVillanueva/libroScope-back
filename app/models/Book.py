@@ -6,8 +6,9 @@ class Book:
         self.title = data['title']
         self.author = data['author']
         self.genre = data['genre']
-        self.year = data['year']
         self.favorite = data['favorite']
+        self.pdf_path = data['pdf_path']
+        self.image_path = data['image_path']
         self.user_id = data['user_id']
 
     @staticmethod
@@ -72,7 +73,7 @@ class Book:
 
     @classmethod
     def insert_book(cls, data):
-        query = 'INSERT INTO book (title, author, genre, year, user_id) VALUES (%(title)s, %(author)s, %(genre)s, %(year)s, %(user_id)s)'
+        query = 'INSERT INTO book (title, author, genre, user_id, favorite, pdf_path, image_path) VALUES (%(title)s, %(author)s, %(genre)s, %(user_id)s, %(favorite)s, %(pdf_path)s, %(image_path)s)'
         new_book = connectToMySQL('libroscope').query_db(query, data)
         return new_book
 

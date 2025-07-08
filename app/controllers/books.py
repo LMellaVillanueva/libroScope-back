@@ -1,9 +1,11 @@
-from flask import Blueprint, request, jsonify
+from flask import Blueprint, request, jsonify, send_from_directory
 from elasticsearch import Elasticsearch
 from app import app
 from app.models.Book import Book
 import requests
 import random
+import os
+from werkzeug.utils import secure_filename
 
 book_bp = Blueprint('book_bp', __name__)
 
@@ -74,15 +76,38 @@ def search_books(query, categorie):
 @book_bp.route('/all_books/<user_id>', methods=['GET'])
 def all_books(user_id):
     all_books = Book.get_all_books(user_id)
-
     if not len(all_books):
         return jsonify({ "errors":'No hay libros registrados' }), 404
 
     return jsonify({ "books":all_books }), 200
 
+# Declarado en el global para ocuparlo en otras rutas
+FOLDER_PDFS = 'uploads/pdfs'
+FOLDER_IMAGES = 'uploads/images'
+
 @book_bp.route('/publish', methods=['POST'])
 def publicate_book():
-    data_book = request.get_json()
+    # Rutas donde se guardaran los archivos
+    # Crear las carpetas si no existen
+    os.makedirs(FOLDER_PDFS, exist_ok=True)
+    os.makedirs(FOLDER_IMAGES, exist_ok=True)
+
+    data_book = request.form
+    pdf_file = request.files['pdf']
+    image_file = request.files['image']
+    if not pdf_file or not image_file:
+        return jsonify({ "errors": 'Archivos faltantes' }), 400
+
+    # Guardar los archivos con un nombre seguro en el disco
+    pdf_filename = secure_filename(pdf_file.filename)
+    image_filename = secure_filename(image_file.filename)
+
+    # Crear rutas completas y guardar los archivos
+    pdf_path = f'uploads/pdfs/{pdf_filename}'
+    image_path = f"uploads/images/{image_filename}"
+
+    pdf_file.save(pdf_path)
+    image_file.save(image_path)
 
     book_existant = Book.get_book_by_title(data_book['title'])
     if book_existant:
@@ -92,13 +117,31 @@ def publicate_book():
     if len(errors_book):
         return jsonify({ "errors":errors_book }), 400
 
-    # data_book['genre'] = data_book['genre'].replace(', ', ',')
 
-    new_book_id = Book.insert_book(data_book)
+    # data_book['genre'] = data_book['genre'].replace(', ', ',')
+    book_complete = {
+        "title": data_book['title'],
+        "author": data_book['author'],
+        "genre": data_book['genre'],
+        "user_id": int(data_book['user_id']),
+        "favorite": 1 if data_book['favorite'].lower() == 'true' else 0,
+        "pdf_path": pdf_path,
+        "image_path": image_path
+    }
+
+    new_book_id = Book.insert_book(book_complete)
     if not new_book_id:
         return jsonify({ "errors":'Error en la base de datos' }), 500
 
     return jsonify({ "book_id":new_book_id }), 201
+
+@book_bp.route('/uploads/images/<filename>')
+def get_image(filename):
+    return send_from_directory(FOLDER_IMAGES, filename)
+
+@book_bp.route('/uploads/pdfs/<filename>')
+def get_pdf(filename):
+    return send_from_directory(FOLDER_PDFS, filename)
 
 @book_bp.route('/favorite/<id>', methods=['GET', 'POST'])
 def favorite(id):
@@ -134,4 +177,4 @@ def elim_book(id):
     if not elim_book:
         return jsonify({ "errors":'Este libro no existe' }), 404
 
-    return jsonify({ "message":'Libro eliminado' }), 200
+    return jsonify({ "message":'Libro eliminado' }), 200    
