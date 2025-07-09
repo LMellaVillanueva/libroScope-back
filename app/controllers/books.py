@@ -2,10 +2,13 @@ from flask import Blueprint, request, jsonify, send_from_directory
 from elasticsearch import Elasticsearch
 from app import app
 from app.models.Book import Book
+from werkzeug.utils import secure_filename
+from sklearn.metrics.pairwise import cosine_similarity
+from sklearn.preprocessing import OneHotEncoder
 import requests
 import random
 import os
-from werkzeug.utils import secure_filename
+import pandas as pd
 
 book_bp = Blueprint('book_bp', __name__)
 
@@ -177,4 +180,4 @@ def elim_book(id):
     if not elim_book:
         return jsonify({ "errors":'Este libro no existe' }), 404
 
-    return jsonify({ "message":'Libro eliminado' }), 200    
+    return jsonify({ "message":'Libro eliminado' }), 200 
