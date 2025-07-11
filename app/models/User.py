@@ -65,6 +65,15 @@ class User:
         for user_existant in db_user:
             user.append(cls(user_existant))
         return user
+        
+    @classmethod
+    def get_user_by_id(cls, id_user):
+        query = 'SELECT * FROM user WHERE id_user = %(id_user)s'
+        db_user = connectToMySQL('libroscope').query_db(query, {'id_user': id_user})
+        user = []
+        for user_existant in db_user:
+            user.append(cls(user_existant))
+        return user
 
     @classmethod
     def get_all_users(cls):

@@ -64,3 +64,11 @@ def elim_all_users():
 def all_users():
     all_users = User.get_all_users()
     return jsonify({ "users": all_users }), 200
+
+@user_bp.route('/one_user/<id>', methods=['GET'])
+def one_user(id):
+    user = User.get_user_by_id(id)
+    if not user:
+        return jsonify({ "errors": 'User no existe' }), 404
+    return jsonify({ "success": 'User en base de datos' }), 200
+    

@@ -83,11 +83,13 @@ def search_books(query, categorie):
 def recommend_books():
     book = request.get_json()
     title = book['volumeInfo'].get('title')
-    categorie = book['volumeInfo'].get('categories', [])[0]
-    if not categorie:
-        return jsonify({ "errors": 'No se encontró categoría en el libro proporcionado' }), 400
+    categories = book['volumeInfo'].get('categories', [])
+    if categories:
+        categorie = categories[0]
+    else:
+        categorie = 'fiction'
 
-    response = requests.get(f'https://www.googleapis.com/books/v1/volumes?q=subject:{categorie[0]}&maxResults=40&key=AIzaSyDNQ631Qv6pa6tyXCeU1xds2mnYL1KYNg8')
+    response = requests.get(f'https://www.googleapis.com/books/v1/volumes?q=subject:{categorie}&maxResults=40&key=AIzaSyDNQ631Qv6pa6tyXCeU1xds2mnYL1KYNg8')
     if response.status_code != 200:
         return jsonify({ "errors": 'Error al obtener libros de Google Book' }), 500
 
@@ -102,33 +104,55 @@ def recommend_books():
         volumeInfo = item.get('volumeInfo', {})
         book_list.append({
             'title': volumeInfo.get('title'),
-            'authors': volumeInfo.get('authors'), # Si no hay 1era categorie por defecto es 'unknown'
+            'authors': volumeInfo.get('authors'),
+             # Si no hay 1era categorie por defecto es 'unknown'
             'categories': volumeInfo.get('categories', ['unknown'])[0]
         })
+
+    # Agregamos manualmente el libro recibido por POST al listado
+    book_title = book['volumeInfo'].get('title', 'unknown')
+    book_categories = book['volumeInfo'].get('categories', ['unknown'])
+    book_list.append({
+        'title': book_title,
+        'categories': book_categories[0]
+    })
     # Creamos el DataFrame
-    df = pd.DataFrame(book_list)
-    # Creamos el codificador para title
+    df = pd.DataFrame(book_list).drop_duplicates(subset='title')
+    # Codificador para title (tansformar texto a números según su importancia)
     tfidf_title = TfidfVectorizer()
-    title_vector = tfidf_title.fit_transform(df['title']).toarray()
+    title_encoder = tfidf_title.fit_transform(df['title']).toarray()
     # Actualizamos la lista de authors a un string completo, si es una lista las une con un espacio ' ', si no se queda como está
     df['authors'] = df['authors'].apply(lambda author: ' '.join(author) if isinstance(author, list) else author)
-    # Reemplazar un valor null por ''
+    # Reemplazar un valor null por un string vacío ''
     df['authors'] = df['authors'].fillna('')
-    # Codificador para authors
+    # Codificar authors
     tfidf_authors = TfidfVectorizer()
-    author_vector = tfidf_authors.fit_transform(df['authors']).toarray()
-    # Codificador para el categorie
+    author_encoder = tfidf_authors.fit_transform(df['authors']).toarray()
+    # Codificador categorie
     encoder = OneHotEncoder(sparse_output=False)
     categorie_encoder = encoder.fit_transform(df[['categories']])
     # Creamos la matriz juntando los valores
-    matriz = np.hstack((title_vector, author_vector, categorie_encoder))
-    matriz_similarity = cosine_similarity(matriz)
+    matrix = np.hstack((title_encoder, author_encoder, categorie_encoder))
+    similarity_matrix = cosine_similarity(matrix)
     # DataFrame ordenado por title
-    similarity_df = pd.DataFrame(matriz_similarity, index=df['categorie'], columns=df['categorie'])
-    similar_books = similarity_df[title].sort_values(ascending=False).head(3)
-    print(similar_books)
+    similarity_df = pd.DataFrame(similarity_matrix, index=df['title'], columns=df['title'])
+    if title not in similarity_df.columns:
+        return jsonify({ "errors": f'El libro {title} no fue encontrado en la base de datos' }), 404
+    similar_books = similarity_df[title].drop(title).sort_values(ascending=False).head(3)
+    print(similar_books.to_dict())
+    recommend_books = []
+    # Obtener items de google_books
+    books_from_google = google_books.get('items')
+    added_titles = set()
+    
+    for book in books:
+        volumeInfo = book.get('volumeInfo', {})
+        title = volumeInfo.get('title', '')
+        if title in similar_books and title not in added_titles:
+            recommend_books.append(book)
+            added_titles.add(title)
 
-    return jsonify({ "recommend_books": similarity_df }), 200
+    return jsonify({ "recommend_books": recommend_books }), 200
 
 @book_bp.route('/all_books/<user_id>', methods=['GET'])
 def all_books(user_id):
