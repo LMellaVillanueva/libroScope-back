@@ -1,4 +1,4 @@
-from flask import Blueprint, request, jsonify, send_from_directory
+from flask import Blueprint, request, jsonify, send_from_directory, current_app
 from elasticsearch import Elasticsearch
 from app import app
 from app.models.Book import Book
@@ -204,8 +204,8 @@ def publicate_book():
         "title": data_book['title'],
         "author": data_book['author'],
         "genre": data_book['genre'],
+        "description": data_book['description'],
         "user_id": int(data_book['user_id']),
-        "favorite": 1 if data_book['favorite'].lower() == 'true' else 0,
         "pdf_path": pdf_path,
         "image_path": image_path
     }
@@ -224,38 +224,30 @@ def get_image(filename):
 def get_pdf(filename):
     return send_from_directory(FOLDER_PDFS, filename)
 
-@book_bp.route('/favorite/<id>', methods=['GET', 'POST'])
-def favorite(id):
-    Book.favorite(id)
-
-    book_favorite = Book.get_book_by_id(id)
-    if book_favorite[0].favorite != 1:
-        return jsonify({ "errors":'Error al volver libro favorito' }), 500
-        
-    return jsonify({ "message":'Libro favorito' }), 200
-
-@book_bp.route('/not_favorite/<id>', methods=['GET', 'POST'])
-def not_favorite(id):
-    Book.not_favorite(id)
-
-    book_not_favorite = Book.get_book_by_id(id)
-    if book_not_favorite[0].favorite != 0:
-        return jsonify({ "errors":'Error al quitar libro favorito' }), 500
-        
-    return jsonify({ "message":'Libro no favorito' }), 200
-
-@book_bp.route('/favorites', methods=['GET'])
-def favorites():
-    favorite_books = Book.get_favorite_books()
-    if not len(favorite_books):
-        return jsonify({ "errors":'No hay libros favoritos' }), 404
-
-    return jsonify({ "favorite_books":favorite_books }), 200
-
 @book_bp.route('/elim/<id>', methods=['POST'])
 def elim_book(id):
-    elim_book = Book.delete_book(id)
-    if not elim_book:
+    book = Book.get_book_by_id(id)
+    if not book:
         return jsonify({ "errors":'Este libro no existe' }), 404
 
-    return jsonify({ "message":'Libro eliminado' }), 200 
+    # Construimos las rutas completas a los archivos pdf e images del proyecto
+    pdf_path = os.path.join(current_app.root_path, book[0].pdf_path)
+    # current_app.root_path = \Users\lucks\Desktop\LibroScope_Back\
+    image_path = os.path.join(current_app.root_path, book[0].image_path)
+
+    print("Ruta PDF:", pdf_path)
+    print("Ruta imagen:", image_path)
+    print("Existe PDF:", os.path.exists(pdf_path))
+    print("Existe imagen:", os.path.exists(image_path))
+
+
+    # Eliminar los archivos
+    if os.path.exists(pdf_path):
+        os.remove(pdf_path)
+
+    if os.path.exists(image_path):
+        os.remove(image_path)
+
+    Book.delete_book(id)
+
+    return jsonify({ "success":'Libro y archivos eliminados' }), 200

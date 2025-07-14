@@ -6,7 +6,7 @@ class Book:
         self.title = data['title']
         self.author = data['author']
         self.genre = data['genre']
-        self.favorite = data['favorite']
+        self.description = data['description']
         self.pdf_path = data['pdf_path']
         self.image_path = data['image_path']
         self.user_id = data['user_id']
@@ -53,6 +53,7 @@ class Book:
     def get_book_by_id(cls, id_book):
         query = 'SELECT * FROM book WHERE id_book = %(id_book)s'
         book_existant = connectToMySQL('libroscope').query_db(query, {'id_book': id_book})
+        print(book_existant)
         book = []
         for db_book in book_existant:
             book.append(cls(db_book))
@@ -73,7 +74,7 @@ class Book:
 
     @classmethod
     def insert_book(cls, data):
-        query = 'INSERT INTO book (title, author, genre, user_id, favorite, pdf_path, image_path) VALUES (%(title)s, %(author)s, %(genre)s, %(user_id)s, %(favorite)s, %(pdf_path)s, %(image_path)s)'
+        query = 'INSERT INTO book (title, author, genre, description, user_id, pdf_path, image_path) VALUES (%(title)s, %(author)s, %(genre)s, %(description)s, %(user_id)s, %(pdf_path)s, %(image_path)s)'
         new_book = connectToMySQL('libroscope').query_db(query, data)
         return new_book
 

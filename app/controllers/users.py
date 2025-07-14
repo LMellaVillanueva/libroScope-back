@@ -68,7 +68,7 @@ def all_users():
 @user_bp.route('/one_user/<id>', methods=['GET'])
 def one_user(id):
     user = User.get_user_by_id(id)
-    if not user:
+    if not len(user):
         return jsonify({ "errors": 'User no existe' }), 404
     return jsonify({ "success": 'User en base de datos' }), 200
     
