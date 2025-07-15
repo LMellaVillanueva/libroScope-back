@@ -66,27 +66,10 @@ class Book:
         return all_books
 
     @classmethod
-    def get_favorite_books(cls):
-        query = 'SELECT * FROM book LEFT JOIN user ON book.user_id = user.id_user WHERE book.favorite = 1'
-        favorite_books = connectToMySQL('libroscope').query_db(query)
-        print(favorite_books)
-        return favorite_books
-
-    @classmethod
     def insert_book(cls, data):
         query = 'INSERT INTO book (title, author, genre, description, user_id, pdf_path, image_path) VALUES (%(title)s, %(author)s, %(genre)s, %(description)s, %(user_id)s, %(pdf_path)s, %(image_path)s)'
         new_book = connectToMySQL('libroscope').query_db(query, data)
         return new_book
-
-    @classmethod
-    def favorite(cls, id_book):
-        query = 'UPDATE book SET favorite = 1 WHERE id_book = %(id_book)s'
-        connectToMySQL('libroscope').query_db(query, { 'id_book': id_book })
-
-    @classmethod
-    def not_favorite(cls, id_book):
-        query = 'UPDATE book SET favorite = 0 WHERE id_book = %(id_book)s'
-        connectToMySQL('libroscope').query_db(query, { 'id_book': id_book })
 
     @classmethod
     def delete_book(cls, id_book):

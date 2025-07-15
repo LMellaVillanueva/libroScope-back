@@ -48,8 +48,9 @@ def search_books(query, categorie):
             google_books = response.json()
             for i, book in enumerate(google_books['items']):
                 es.index(index=my_index, id=i+1, body=book)
-    elif len(categorie) and categorie != 'none':
+    elif len(categorie) and categorie != 'none' and categorie != 'community':
         response = requests.get(f'https://www.googleapis.com/books/v1/volumes?q=subject:{categorie}&maxResults=40&key=AIzaSyDNQ631Qv6pa6tyXCeU1xds2mnYL1KYNg8')
+    # elif categorie == 'community':
         if response.status_code == 200:
             google_books = response.json()
             for i, book in enumerate(google_books['items']):
