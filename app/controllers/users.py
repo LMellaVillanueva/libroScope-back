@@ -51,6 +51,7 @@ def login():
         "id_user": user_existant[0].id_user,
         "name": user_existant[0].name,
         "email": user_existant[0].email,
+        "admin": user_existant[0].admin
     }
 
     return jsonify({ "user":user }), 200

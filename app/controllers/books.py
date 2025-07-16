@@ -48,9 +48,10 @@ def search_books(query, categorie):
             google_books = response.json()
             for i, book in enumerate(google_books['items']):
                 es.index(index=my_index, id=i+1, body=book)
-    elif len(categorie) and categorie != 'none' and categorie != 'community':
-        response = requests.get(f'https://www.googleapis.com/books/v1/volumes?q=subject:{categorie}&maxResults=40&key=AIzaSyDNQ631Qv6pa6tyXCeU1xds2mnYL1KYNg8')
     # elif categorie == 'community':
+        
+    elif len(categorie) and categorie != 'none':
+        response = requests.get(f'https://www.googleapis.com/books/v1/volumes?q=subject:{categorie}&maxResults=40&key=AIzaSyDNQ631Qv6pa6tyXCeU1xds2mnYL1KYNg8')
         if response.status_code == 200:
             google_books = response.json()
             for i, book in enumerate(google_books['items']):
@@ -156,12 +157,20 @@ def recommend_books():
     return jsonify({ "recommend_books": recommend_books }), 200
 
 @book_bp.route('/all_books/<user_id>', methods=['GET'])
-def all_books(user_id):
-    all_books = Book.get_all_books(user_id)
+def all_books_user(user_id):
+    all_books = Book.get_all_books_from_user(user_id)
     if not len(all_books):
         return jsonify({ "errors":'No hay libros registrados' }), 404
 
     return jsonify({ "books":all_books }), 200
+
+@book_bp.route('/all_books', methods=['GET'])
+def all_books():
+    all_books = Book.get_all_books()
+    if not len(all_books):
+        return jsonify({ "errors": 'No hay libros registrados' }), 404
+
+    return jsonify({ "all_books":all_books }), 200
 
 # Declarado en el global para ocuparlo en otras rutas
 FOLDER_PDFS = 'uploads/pdfs'
@@ -208,7 +217,7 @@ def publicate_book():
         "description": data_book['description'],
         "user_id": int(data_book['user_id']),
         "pdf_path": pdf_path,
-        "image_path": image_path
+        "image_path": image_path,
     }
 
     new_book_id = Book.insert_book(book_complete)

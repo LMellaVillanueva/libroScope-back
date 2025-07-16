@@ -60,9 +60,15 @@ class Book:
         return book
 
     @classmethod
-    def get_all_books(cls, user_id):
+    def get_all_books_from_user(cls, user_id):
         query = 'SELECT * FROM book LEFT JOIN user ON book.user_id = user.id_user WHERE user.id_user = %(user_id)s'
         all_books = connectToMySQL('libroscope').query_db(query, {'user_id': user_id})
+        return all_books
+
+    @classmethod
+    def get_all_books(cls):
+        query = 'SELECT * FROM book'
+        all_books = connectToMySQL('libroscope').query_db(query)
         return all_books
 
     @classmethod
