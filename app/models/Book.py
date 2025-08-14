@@ -83,7 +83,6 @@ class Book:
         book_existant = connectToMySQL('libroscope').query_db(query_book, { 'id_book':id_book })
         if not book_existant:
             return False
-
         query = 'DELETE FROM book WHERE id_book = %(id_book)s'
         connectToMySQL('libroscope').query_db(query, { 'id_book':id_book })
         return True

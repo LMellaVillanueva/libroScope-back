@@ -80,6 +80,30 @@ def search_books(query, categorie):
     else:
         return jsonify({ "errors":'La query no se obtuvo o no existe' }), 400
 
+@book_bp.route('/search_my_books/<query>', methods=['POST'])
+def search_my_books(query):
+    if not len(query):
+        return jsonify({ "errors": 'No puede estar vacío' }), 400
+    united = query.replace(' ', '')
+    print("QUERY Y UNITED", query, united)
+    book_searched = Book.get_book_by_title(query)
+    print(book_searched)
+    if not len(book_searched):
+        return jsonify({ "errors": 'Este libro no existe' }), 404
+
+    book = {
+        "id_book": book_searched[0].id_book,
+        "title": book_searched[0].title,
+        "author": book_searched[0].author,
+        "genre": book_searched[0].genre,
+        "description": book_searched[0].description,
+        "pdf_path": book_searched[0].pdf_path,
+        "image_path": book_searched[0].image_path,
+        "user_id": book_searched[0].user_id,
+    }
+
+    return jsonify({ "book": book }), 200
+
 # Sist de recomendaciones
 @book_bp.route('/recommend', methods=['POST'])
 def recommend_books():
