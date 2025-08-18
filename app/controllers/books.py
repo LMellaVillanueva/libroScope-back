@@ -40,8 +40,27 @@ es.indices.create(
     }
 )
 
-@book_bp.route('/search/<query>/<categorie>', methods=['POST'])
+my_books_index = 'my_books'
+es.indices.delete(index=my_books_index, ignore_unavailable=True)
+es.indices.create(
+    index=my_books_index,
+    body={
+        'mappings':{
+            'properties':{
+                'title': {'type': 'text'},
+                'author': {'type': 'text'},
+                'genre': {'type': 'text'},
+            }
+        }
+    }
+)
+
+# Búsqueda de libros, tanto de Google como creados
+@book_bp.route('/search/<categorie>/<query>', methods=['POST'])
 def search_books(query, categorie):
+    if not len(query):
+        return jsonify({ "errors": 'No puede estar vacío' }), 400
+        
     if categorie == 'none':
         response = requests.get('https://www.googleapis.com/books/v1/volumes?q=fiction&maxResults=40&key=AIzaSyDNQ631Qv6pa6tyXCeU1xds2mnYL1KYNg8')
         if response.status_code == 200:
@@ -58,51 +77,53 @@ def search_books(query, categorie):
                 es.index(index=my_index, id=i+1, body=book)
     else:
         print(f'Error: {google_books.status_code}')
-    if query:
-        res = es.search(
-            index=my_index,
-            body={
-                'size': 50,
-                'query':{
-                    'multi_match':{
-                        'query': query,
-                        'fields': [
-                            'volumeInfo.title^3',
-                            'volumeInfo.authors',
-                            'volumeInfo.categories'
-                        ],
-                        'fuzziness': 'AUTO'
-                    }
+
+    all_books = Book.get_all_books()
+
+    for i, book in enumerate(all_books):
+        es.index(index=my_books_index, id=i+1, body=book)
+
+    matching_books = []
+
+    matching_google_books = es.search(
+        index=my_index,
+        body={
+            'size': 50,
+            'query':{
+                'multi_match':{
+                    'query': query,
+                    'fields': [
+                        'volumeInfo.title^3',
+                        'volumeInfo.authors',
+                        'volumeInfo.categories'
+                    ],
+                    'fuzziness': 'AUTO'
                 }
             }
-        )
-        return jsonify({ "matching_books": [hit['_source'] for hit in res['hits']['hits']] }), 200
-    else:
-        return jsonify({ "errors":'La query no se obtuvo o no existe' }), 400
+        }
+    )
+    matching_books.extend([hit['_source'] for hit in matching_google_books['hits']['hits']])
 
-@book_bp.route('/search_my_books/<query>', methods=['POST'])
-def search_my_books(query):
-    if not len(query):
-        return jsonify({ "errors": 'No puede estar vacío' }), 400
-    united = query.replace(' ', '')
-    print("QUERY Y UNITED", query, united)
-    book_searched = Book.get_book_by_title(query)
-    print(book_searched)
-    if not len(book_searched):
-        return jsonify({ "errors": 'Este libro no existe' }), 404
+    matching_my_books = es.search(
+        index=my_books_index,
+        body={
+            'size': 50,
+            'query':{
+                'multi_match':{
+                    'query': query,
+                    'fields': [
+                        'title^3',
+                        'author',
+                        'genre'
+                    ],
+                    'fuzziness': 'AUTO'
+                }
+            }
+        }
+    )
+    matching_books.extend([hit['_source'] for hit in matching_my_books['hits']['hits']])
 
-    book = {
-        "id_book": book_searched[0].id_book,
-        "title": book_searched[0].title,
-        "author": book_searched[0].author,
-        "genre": book_searched[0].genre,
-        "description": book_searched[0].description,
-        "pdf_path": book_searched[0].pdf_path,
-        "image_path": book_searched[0].image_path,
-        "user_id": book_searched[0].user_id,
-    }
-
-    return jsonify({ "book": book }), 200
+    return jsonify({ "matching_books": matching_books }), 200
 
 # Sist de recomendaciones
 @book_bp.route('/recommend', methods=['POST'])
