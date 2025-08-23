@@ -143,7 +143,7 @@ def recommend_books():
     google_books = response.json()
     books = google_books.get('items', [])
     if not books:
-        return jsonify({ "errors": 'No se encontraron libros de esta categoría' }), 404
+        return jsonify({ "errors": 'No se encontraron libros recomendados para esta categoría' }), 404
 
     # Creamos la lista de los datos para transformarlos a un DataFrame
     book_list = []
