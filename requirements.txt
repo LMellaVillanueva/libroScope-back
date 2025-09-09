@@ -24,3 +24,4 @@ pymysql
 elasticsearch
 scikit-learn
 pandas
+dotenv
