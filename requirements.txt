@@ -18,3 +18,4 @@ urllib3==2.2.2
 virtualenv==20.26.3
 Werkzeug==3.0.3
 gunicorn
+flask-cors
