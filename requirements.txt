@@ -16,4 +16,4 @@ requests==2.32.3
 setuptools==72.2.0
 urllib3==2.2.2
 virtualenv==20.26.3
-Werkzeug==3.0.3
+Werkzeug==3.0.3gunicorn
