@@ -42,17 +42,7 @@ es = Elasticsearch(
     verify_certs=True
 )
 
-try:
-    conn = connectToMySQL()
-    conn.query_db("SELECT 1")
-    print("✅ MySQL OK")
-except Exception as e:
-    print("❌ Error MySQL:", e)
-
-try:
-    print("✅ ES OK" if es.ping() else "❌ Error ES")
-except Exception as e:
-    print("❌ Error ES:", e)
+print(ES_URL)
 
 # Probar conexión
 print("✅ Conectado a MySQL") if connectToMySQL().query_db("SELECT 1") else print("❌ Error MySQL")

@@ -2,8 +2,6 @@ import os
 import pymysql.cursors
 from dotenv import load_dotenv
 
-# load_dotenv()  # carga las variables de .env
-
 class MySQLConnection:
     def __init__(self, db=None):
         connection = pymysql.connect(
