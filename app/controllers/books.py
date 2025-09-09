@@ -1,24 +1,62 @@
 from flask import Blueprint, request, jsonify, send_from_directory, current_app
 from elasticsearch import Elasticsearch
 from app import app
+from app.config.db_connect import connectToMySQL
 from app.models.Book import Book
 from werkzeug.utils import secure_filename
 from sklearn.metrics.pairwise import cosine_similarity
 from sklearn.preprocessing import OneHotEncoder
+from urllib.parse import urlparse
 # Codificar Title y Authors para recomendaciones
 from sklearn.feature_extraction.text import TfidfVectorizer
+from dotenv import load_dotenv
+from base64 import b64decode
 import requests
 import random
 import os
 import pandas as pd
 import numpy as np
 
+load_dotenv()
+
 book_bp = Blueprint('book_bp', __name__)
 
 #ElasticSearch config
-es = Elasticsearch('http://localhost:9200')
-client_info = es.info()
-print('CONNECTED TO ELASTICSEARCH')
+ES_URL = os.getenv("ES_URL")
+ES_API_KEY = os.getenv("ES_API_KEY")
+
+parsed = urlparse(ES_URL)
+host = parsed.hostname
+port = parsed.port if parsed.port else (443 if parsed.scheme == "https" else 80)
+scheme = parsed.scheme
+
+if host is None:
+    raise ValueError(f"No se pudo parsear el host de la URL: {ES_URL}")
+
+decoded = b64decode(ES_API_KEY).decode("utf-8") 
+id_key, secret_key = decoded.split(":")
+
+es = Elasticsearch(
+    [{"host": host, "port": port, "scheme": scheme}],
+    api_key=(id_key, secret_key),
+    verify_certs=True
+)
+
+try:
+    conn = connectToMySQL()
+    conn.query_db("SELECT 1")
+    print("✅ MySQL OK")
+except Exception as e:
+    print("❌ Error MySQL:", e)
+
+try:
+    print("✅ ES OK" if es.ping() else "❌ Error ES")
+except Exception as e:
+    print("❌ Error ES:", e)
+
+# Probar conexión
+print("✅ Conectado a MySQL") if connectToMySQL().query_db("SELECT 1") else print("❌ Error MySQL")
+print("✅ Conectado a Elasticsearch") if es.ping() else print("❌ Error Elasticsearch")
 
 # Crear índice con una réplica, en caso que el primer index falle
 my_index = 'google_books'
