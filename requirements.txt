@@ -21,3 +21,4 @@ gunicorn
 flask-cors
 flask-bcrypt
 pymysql
+elasticsearch
