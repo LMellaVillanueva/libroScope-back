@@ -9,15 +9,12 @@ from sklearn.preprocessing import OneHotEncoder
 from urllib.parse import urlparse
 # Codificar Title y Authors para recomendaciones
 from sklearn.feature_extraction.text import TfidfVectorizer
-from dotenv import load_dotenv
 from base64 import b64decode
 import requests
 import random
 import os
 import pandas as pd
 import numpy as np
-
-load_dotenv()
 
 book_bp = Blueprint('book_bp', __name__)
 
