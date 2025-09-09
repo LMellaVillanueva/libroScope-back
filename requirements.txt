@@ -23,3 +23,4 @@ flask-bcrypt
 pymysql
 elasticsearch
 scikit-learn
+pandas
