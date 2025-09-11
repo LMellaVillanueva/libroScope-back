@@ -7,8 +7,10 @@ class Book:
         self.author = data['author']
         self.genre = data['genre']
         self.description = data['description']
-        self.pdf_path = data['pdf_path']
-        self.image_path = data['image_path']
+        self.pdf_url = data.get('pdf_path') or data.get('pdf_url')
+        self.image_url = data.get('image_path') or data.get('image_url')
+        self.pdf_id = data.get('pdf_id')
+        self.image_id = data.get('image_id')
         self.user_id = data['user_id']
 
     @staticmethod
