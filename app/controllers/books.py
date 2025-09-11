@@ -18,7 +18,7 @@ import numpy as np
 # Imports para Cloudinary y subida de archivos
 import uuid
 import cloudinary.uploader
-from server import configure_cloudinary
+from app.config.cloudinary_config import configure_cloudinary
 configure_cloudinary()
 
 book_bp = Blueprint('book_bp', __name__)
@@ -268,11 +268,15 @@ def publicate_book():
     if not pdf_file or not image_file:
         return jsonify({ "errors": 'Archivos faltantes' }), 400
 
+    if 'pdf' not in request.files or 'image' not in request.files:
+        return jsonify({"errors": "Archivos faltantes"}), 400
+
     # Crear id únicos
     safe_title = secure_filename(data_book.get('title', 'book')).lower()
     uid = uuid.uuid4().hex[:8]
     image_id = f'books/{safe_title}_img_{uid}'
     pdf_id = f'books/{safe_title}_pdf_{uid}'
+
 
     # Subir archivos
     try:
