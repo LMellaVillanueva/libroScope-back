@@ -295,8 +295,10 @@ def publicate_book():
         )
 
     except Exception as e:
+        import traceback
         current_app.logger.error("Cloudinary error: %s", e)
-        return jsonify({"errors": "Error subiendo archivos a Cloudinary"}), 500
+        current_app.logger.error(traceback.format_exc())
+        return jsonify({"errors": str(e)}), 500
 
     # Extraer URLs y public_ids
     image_url = img_res.get('secure_url')
