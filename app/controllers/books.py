@@ -18,7 +18,7 @@ import numpy as np
 # Imports para Cloudinary y subida de archivos
 import uuid
 import cloudinary.uploader
-from app.server import configure_cloudinary
+from server import configure_cloudinary
 configure_cloudinary()
 
 book_bp = Blueprint('book_bp', __name__)
