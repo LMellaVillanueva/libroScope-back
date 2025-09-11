@@ -267,7 +267,7 @@ def publicate_book():
         return jsonify({ "errors": 'Archivos faltantes' }), 400
 
     # Crear id únicos
-    safe_title = secure_filname(data_book.get('title', 'book')).lower()
+    safe_title = secure_filename(data_book.get('title', 'book')).lower()
     uid = uuid.uuid4().hex[:8]
     image_id = f'books/{safe_title}_img_{uid}'
     pdf_id = f'books/{safe_title}_pdf_{uid}'
