@@ -75,7 +75,7 @@ class Book:
 
     @classmethod
     def insert_book(cls, data):
-        query = 'INSERT INTO book (title, author, genre, description, user_id, pdf_path, image_path) VALUES (%(title)s, %(author)s, %(genre)s, %(description)s, %(user_id)s, %(pdf_path)s, %(image_path)s)'
+        query = 'INSERT INTO book (title, author, genre, description, user_id, pdf_url, image_url, pdf_id, image_id) VALUES (%(title)s, %(author)s, %(genre)s, %(description)s, %(user_id)s, %(pdf_url)s, %(image_url)s, %(pdf_id)s, %(image_id)s)'
         new_book = connectToMySQL('libroscope').query_db(query, data)
         return new_book
 
