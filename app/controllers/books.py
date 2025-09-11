@@ -15,6 +15,9 @@ import random
 import os
 import pandas as pd
 import numpy as np
+# Imports para Cloudinary y subida de archivos
+import uuid
+import cloudinary.uploader
 
 book_bp = Blueprint('book_bp', __name__)
 
@@ -243,15 +246,19 @@ def all_books():
     return jsonify({ "all_books":all_books }), 200
 
 # Declarado en el global para ocuparlo en otras rutas
-FOLDER_PDFS = 'uploads/pdfs'
-FOLDER_IMAGES = 'uploads/images'
+# FOLDER_PDFS = 'uploads/pdfs'
+# FOLDER_IMAGES = 'uploads/images'
+
+# Tipos de archivos aceptados
+ALLOWED_IMG = {'png','jpg','jpeg','gif','webp'}
+ALLOWED_PDF = {'pdf'}
 
 @book_bp.route('/publish', methods=['POST'])
 def publicate_book():
     # Rutas donde se guardaran los archivos
     # Crear las carpetas si no existen
-    os.makedirs(FOLDER_PDFS, exist_ok=True)
-    os.makedirs(FOLDER_IMAGES, exist_ok=True)
+    # os.makedirs(FOLDER_PDFS, exist_ok=True)
+    # os.makedirs(FOLDER_IMAGES, exist_ok=True)
 
     data_book = request.form
     pdf_file = request.files['pdf']
@@ -259,16 +266,48 @@ def publicate_book():
     if not pdf_file or not image_file:
         return jsonify({ "errors": 'Archivos faltantes' }), 400
 
+    # Crear id únicos
+    safe_title = secure_filname(data_book.get('title', 'book')).lower()
+    uid = uuid.uuid4().hex[:8]
+    image_id = f'books/{safe_title}_img_{uid}'
+    pdf_id = f'books/{safe_title}_pdf_{uid}'
+
+    # Subir archivos
+    try:
+        img_res = cloudinary.uploader.upload(
+            image_file,
+            public_id=image_id,
+            folder='books/images',
+            overwrite=False
+        )
+
+        pdf_res = cloudinary.uploader.upload(
+            pdf_file,
+            public_id=pdf_id,
+            folder='books/pdfs',
+            resource_type='raw',
+        )
+
+    except Exception as e:
+        current_app.logger.error("Cloudinary error: %s", e)
+        return jsonify({"errors": "Error subiendo archivos a Cloudinary"}), 500
+
+    # Extraer URLs y public_ids
+    image_url = img_res.get('secure_url')
+    pdf_url   = pdf_res.get('secure_url')
+    image_pub_id = img_res.get('public_id')
+    pdf_pub_id   = pdf_res.get('public_id')
+
     # Guardar los archivos con un nombre seguro en el disco
-    pdf_filename = secure_filename(pdf_file.filename)
-    image_filename = secure_filename(image_file.filename)
+    # pdf_filename = secure_filename(pdf_file.filename)
+    # image_filename = secure_filename(image_file.filename)
 
     # Crear rutas completas y guardar los archivos
-    pdf_path = f'uploads/pdfs/{pdf_filename}'
-    image_path = f"uploads/images/{image_filename}"
+    # pdf_path = f'uploads/pdfs/{pdf_filename}'
+    # image_path = f"uploads/images/{image_filename}"
 
-    pdf_file.save(pdf_path)
-    image_file.save(image_path)
+    # pdf_file.save(pdf_path)
+    # image_file.save(image_path)
 
     book_existant = Book.get_book_by_title(data_book['title'])
     if book_existant:
@@ -276,6 +315,9 @@ def publicate_book():
 
     errors_book = Book.validate_book(data_book)
     if len(errors_book):
+        # Borrar archivos si validación falla
+        cloudinary.uploader.destroy(image_pub_id, resource_type='image')
+        cloudinary.uploader.destroy(pdf_pub_id, resource_type='raw')
         return jsonify({ "errors":errors_book }), 400
 
 
@@ -286,23 +328,28 @@ def publicate_book():
         "genre": data_book['genre'],
         "description": data_book['description'],
         "user_id": int(data_book['user_id']),
-        "pdf_path": pdf_path,
-        "image_path": image_path,
+        "pdf_url": pdf_url,
+        "image_url": image_url,
+        "pdf_id": pdf_pub_id,
+        "image_id": image_pub_id
     }
 
     new_book_id = Book.insert_book(book_complete)
     if not new_book_id:
+        # si falla BD, limpiar assets en cloud
+        cloudinary.uploader.destroy(image_pub_id, resource_type='image')
+        cloudinary.uploader.destroy(pdf_pub_id, resource_type='raw')
         return jsonify({ "errors":'Error en la base de datos' }), 500
 
     return jsonify({ "book_id":new_book_id }), 201
 
-@book_bp.route('/uploads/images/<filename>')
-def get_image(filename):
-    return send_from_directory(FOLDER_IMAGES, filename)
+# @book_bp.route('/uploads/images/<filename>')
+# def get_image(filename):
+#     return send_from_directory(FOLDER_IMAGES, filename)
 
-@book_bp.route('/uploads/pdfs/<filename>')
-def get_pdf(filename):
-    return send_from_directory(FOLDER_PDFS, filename)
+# @book_bp.route('/uploads/pdfs/<filename>')
+# def get_pdf(filename):
+#     return send_from_directory(FOLDER_PDFS, filename)
 
 @book_bp.route('/elim/<id>', methods=['POST'])
 def elim_book(id):
@@ -311,22 +358,33 @@ def elim_book(id):
         return jsonify({ "errors":'Este libro no existe' }), 404
 
     # Construimos las rutas completas a los archivos pdf e images del proyecto
-    pdf_path = os.path.join(current_app.root_path, book[0].pdf_path)
+    # pdf_path = os.path.join(current_app.root_path, book[0].pdf_path)
     # current_app.root_path = \Users\lucks\Desktop\LibroScope_Back\
-    image_path = os.path.join(current_app.root_path, book[0].image_path)
+    # image_path = os.path.join(current_app.root_path, book[0].image_path)
 
-    print("Ruta PDF:", pdf_path)
-    print("Ruta imagen:", image_path)
-    print("Existe PDF:", os.path.exists(pdf_path))
-    print("Existe imagen:", os.path.exists(image_path))
+    pdf_pub_id = book[0].pdf_public_id
+    img_pub_id = book[0].image_public_id
+
+    try:
+        if img_pub_id:
+            cloudinary.uploader.destroy(img_pub_id, resource_type='image')
+        if pdf_pub_id:
+            cloudinary.uploader.destroy(pdf_pub_id, resource_type='raw')
+    except Exception as e:
+        current_app.logger.error("Error eliminando en Cloudinary: %s", e)
+
+    # print("Ruta PDF:", pdf_path)
+    # print("Ruta imagen:", image_path)
+    # print("Existe PDF:", os.path.exists(pdf_path))
+    # print("Existe imagen:", os.path.exists(image_path))
 
 
     # Eliminar los archivos
-    if os.path.exists(pdf_path):
-        os.remove(pdf_path)
+    # if os.path.exists(pdf_path):
+    #     os.remove(pdf_path)
 
-    if os.path.exists(image_path):
-        os.remove(image_path)
+    # if os.path.exists(image_path):
+    #     os.remove(image_path)
 
     Book.delete_book(id)
 

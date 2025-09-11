@@ -1,6 +1,15 @@
 from flask import Flask
 from flask_cors import CORS
 from app import app 
+import os
+import cloudinary
+
+cloudinary.config(
+    cloud_name = os.getenv('CLOUDINARY_CLOUD_NAME'),
+    api_key = os.getenv('CLOUDINARY_API_KEY'),
+    api_secret = os.getenv('CLOUDINARY_API_SECRET'),
+    secure = True
+)
 
 def create_app():
     app = Flask(__name__)
