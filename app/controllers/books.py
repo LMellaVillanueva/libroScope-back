@@ -292,6 +292,7 @@ def publicate_book():
             public_id=pdf_id,
             folder='books/pdfs',
             resource_type='raw',
+            flags='inline'
         )
 
     except Exception as e:
