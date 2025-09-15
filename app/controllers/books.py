@@ -289,11 +289,12 @@ def publicate_book():
 
         pdf_res = cloudinary.uploader.upload(
             pdf_file,
-            public_id=pdf_id,
-            folder='books/pdfs',
-            resource_type='auto',
+            public_id=f"{safe_title}_pdf_{uid}",  
+            folder="books/pdfs",                  
+            resource_type="auto",
             overwrite=False
         )
+
 
     except Exception as e:
         import traceback
