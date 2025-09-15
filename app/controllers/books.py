@@ -291,8 +291,8 @@ def publicate_book():
             pdf_file,
             public_id=pdf_id,
             folder='books/pdfs',
-            resource_type='raw',
-            flags='inline'
+            resource_type='auto',
+            overwrite=False
         )
 
     except Exception as e:
