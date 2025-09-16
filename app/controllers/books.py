@@ -291,7 +291,7 @@ def publicate_book():
             pdf_file,
             public_id=f"{safe_title}_pdf_{uid}",  
             folder="books/pdfs",                  
-            resource_type="auto",
+            resource_type="raw",
             overwrite=False
         )
 
