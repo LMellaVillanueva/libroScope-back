@@ -304,14 +304,9 @@ def publicate_book():
 
     # Extraer URLs y public_ids
     image_url = img_res.get('secure_url')
+    pdf_url   = pdf_res.get('secure_url')
     image_pub_id = img_res.get('public_id')
-
     pdf_pub_id   = pdf_res.get('public_id')
-    # pdf_url   = pdf_res.get('secure_url')
-    version = pdf_res.get('version')
-
-    cloud_name = "yoelukita" 
-    pdf_url = f"https://res.cloudinary.com/{cloud_name}/raw/upload/v{version}/{pdf_pub_id}.pdf"
 
     # Guardar los archivos con un nombre seguro en el disco
     # pdf_filename = secure_filename(pdf_file.filename)
