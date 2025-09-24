@@ -28,10 +28,10 @@ ES_URL = os.getenv("ES_URL")
 ES_USER = os.getenv("ES_USER")
 ES_PASSWORD = os.getenv("ES_PASSWORD")
 
-parsed = urlparse(ES_URL)
-host = parsed.hostname
-port = parsed.port if parsed.port else (443 if parsed.scheme == "https" else 80)
-scheme = parsed.scheme
+# parsed = urlparse(ES_URL)
+# host = parsed.hostname
+# port = parsed.port if parsed.port else (443 if parsed.scheme == "https" else 80)
+# scheme = parsed.scheme
 
 # if host is None:
 #     raise ValueError(f"No se pudo parsear el host de la URL: {ES_URL}")
