@@ -25,26 +25,26 @@ book_bp = Blueprint('book_bp', __name__)
 
 #ElasticSearch config
 ES_URL = os.getenv("ES_URL")
-ES_API_KEY = os.getenv("ES_API_KEY")
+ES_USER = os.getenv("ES_USER")
+ES_PASSWORD = os.getenv("ES_PASSWORD")
 
 parsed = urlparse(ES_URL)
 host = parsed.hostname
 port = parsed.port if parsed.port else (443 if parsed.scheme == "https" else 80)
 scheme = parsed.scheme
 
-if host is None:
-    raise ValueError(f"No se pudo parsear el host de la URL: {ES_URL}")
+# if host is None:
+#     raise ValueError(f"No se pudo parsear el host de la URL: {ES_URL}")
 
-decoded = b64decode(ES_API_KEY).decode("utf-8") 
-id_key, secret_key = decoded.split(":")
+# decoded = b64decode(ES_API_KEY).decode("utf-8") 
+# id_key, secret_key = decoded.split(":")
 
 es = Elasticsearch(
     [{"host": host, "port": port, "scheme": scheme}],
-    api_key=(id_key, secret_key),
-    verify_certs=True
+    basic_auth=(ES_USER, ES_PASSWORD),
+    verify_certs=False  # Railway no siempre tiene cert válido, prueba con False
 )
 
-print(ES_URL)
 
 # Probar conexión
 print("✅ Conectado a MySQL") if connectToMySQL().query_db("SELECT 1") else print("❌ Error MySQL")
