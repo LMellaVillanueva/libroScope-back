@@ -361,7 +361,7 @@ def publicate_book():
 # def get_pdf(filename):
 #     return send_from_directory(FOLDER_PDFS, filename)
 
-@book_bp.route('/elim/<id>', methods=['DELETE'])
+@book_bp.route('/elim/<id>', methods=['POST'])
 def elim_book(id):
     book = Book.get_book_by_id(id)
     if not book:
