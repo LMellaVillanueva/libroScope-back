@@ -372,9 +372,8 @@ def elim_book(id):
     # current_app.root_path = \Users\lucks\Desktop\LibroScope_Back\
     # image_path = os.path.join(current_app.root_path, book[0].image_path)
 
-    pdf_pub_id = book.pdf_public_id
-    img_pub_id = book.image_public_id
-
+    pdf_pub_id = book[0].pdf_id
+    img_pub_id = book[0].image_id
 
     print(pdf_pub_id, img_pub_id)
 
