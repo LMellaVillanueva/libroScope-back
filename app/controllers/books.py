@@ -375,6 +375,8 @@ def elim_book(id):
     pdf_pub_id = book[0].pdf_public_id
     img_pub_id = book[0].image_public_id
 
+    print(pdf_pub_id, img_pub_id)
+
     try:
         if img_pub_id:
             cloudinary.uploader.destroy(img_pub_id, resource_type='image')
