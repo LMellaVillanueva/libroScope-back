@@ -39,12 +39,17 @@ scheme = parsed.scheme
 # decoded = b64decode(ES_API_KEY).decode("utf-8") 
 # id_key, secret_key = decoded.split(":")
 
-es = Elasticsearch(
-    [{"host": host, "port": port, "scheme": scheme}],
-    basic_auth=(ES_USER, ES_PASSWORD),
-    verify_certs=False  # Railway no siempre tiene cert válido, prueba con False
-)
+# es = Elasticsearch(
+#     [{"host": host, "port": port, "scheme": scheme}],
+#     basic_auth=(ES_USER, ES_PASSWORD),
+#     verify_certs=False  # Railway no siempre tiene cert válido, prueba con False
+# )
 
+es = Elasticsearch(
+    ES_URL,  # la URL completa con https://
+    basic_auth=(ES_USER, ES_PASSWORD),
+    verify_certs=False  # solo si Railway no tiene certificado válido
+)
 
 # Probar conexión
 print("✅ Conectado a MySQL") if connectToMySQL().query_db("SELECT 1") else print("❌ Error MySQL")
