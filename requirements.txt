@@ -21,7 +21,7 @@ gunicorn
 flask-cors
 flask-bcrypt
 pymysql
-elasticsearch>=9.0.0
+elasticsearch<9.0.0,>=8.0.0
 scikit-learn
 pandas
 dotenv

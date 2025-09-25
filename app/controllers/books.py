@@ -46,9 +46,10 @@ ES_PASSWORD = os.getenv("ES_PASSWORD")
 # )
 
 es = Elasticsearch(
-    ES_URL,  # la URL completa con https://
+    ES_URL,
     basic_auth=(ES_USER, ES_PASSWORD),
-    verify_certs=False  # solo si Railway no tiene certificado válido
+    verify_certs=False,
+    headers={"Accept": "application/vnd.elasticsearch+json; compatible-with=8"},
 )
 
 # Probar conexión
