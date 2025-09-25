@@ -4,7 +4,7 @@ from app import app
 
 def create_app():
     app = Flask(__name__)
-    CORS(app, resources={r"/*": {"origins": "http://localhost:5173"}}, supports_credentials=True) 
+    CORS(app, resources={r"/*": {"origins": "https://libroscope.vercel.app"}}, supports_credentials=True) 
 
     from app.controllers.users import user_bp
     app.register_blueprint(user_bp, url_prefix='/user')
